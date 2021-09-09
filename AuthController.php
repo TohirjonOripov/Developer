@@ -1,47 +1,49 @@
 <?php
 
-namespace app\controllers;
+namespace app\modules\admin\controllers;
 
-use app\models\LoginForm;
-use app\models\SignupForm;
-use yii\web\Controller;
+use app\modules\admin\models\Admin;
 use Yii;
+
+use yii\filters\AccessControl;
+use yii\web\Controller;
+
 
 class AuthController extends Controller
 {
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
+       public function actionLogin(){
+           $model = new Admin();
+           if (Yii::$app->session->has('email') && Yii::$app->session->has('password')){
+               return $this->redirect(['auth/login']);
+           }
+           else{
+               return $this->render('login',compact('model'));
+           }
+       }
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
+       public function actionSignIn(){
+           $model = new Admin();
+           if ($model->load(Yii::$app->request->post())){
+               $email = $model->email;
+               $password = $model->password;
+               if ($model->isAuth($email,$password)){
+                   return $this->redirect(['main/index']);
+               }
+               else{
+                   return $this->redirect(['auth/login']);
+               }
+           }
+       }
+       public function actionLogout(){
+           Yii::$app->session->destroy();
+           return $this->redirect(['auth/login']);
+       }
 
-        $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
-        ]);
-    }
 
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
 
-        return $this->goHome();
-    }
 
-   public function actionSignup(){
-        $model = new SignupFom();
-         if ( $model->load(\Yii::$app->request->post())){
-             if ($model->signup()){
-              return $this->redirect(['auth/login']);
-             }
-//             debug($model);
-         }
-        return $this->render('signup',compact('model'));
-   }
+
+
+
 
 }
